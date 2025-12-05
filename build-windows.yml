@@ -1,0 +1,38 @@
+name: Build Cut5 (Windows)
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install ffmpeg
+      run: choco install ffmpeg -y
+
+    - name: Install pyinstaller
+      run: python -m pip install pyinstaller
+
+    - name: Generate icon.ico from base64
+      run: |
+        powershell -Command ^
+          "$b=[System.Convert]::FromBase64String((Get-Content icon_base64.txt)); ^
+          Set-Content -Encoding Byte icon.ico -Value $b"
+
+    - name: Build EXE
+      run: pyinstaller --noconsole --onefile --icon=icon.ico split5s.py
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Cut5-exe
+        path: dist/*.exe
